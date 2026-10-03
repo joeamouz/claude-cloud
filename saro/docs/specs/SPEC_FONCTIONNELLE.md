@@ -12,10 +12,10 @@
 |---|---|
 | **Église / Site** | Entité racine. Prévoir le multi-sites dès le modèle, même si un seul site est actif au départ. |
 | **Zone** | Regroupement géographique d'une ou plusieurs communes. Ex. « Yopougon » (1 commune) ou « Abidjan Sud » (Treichville, Marcory, Port-Bouët, Koumassi). Le découpage **évolue avec la croissance** de l'église. |
-| **Tribu** | Groupe de membres conduit par un **patriarche**. Il se réunit 10 minutes chaque dimanche après le culte. Les tribus portent aussi le **programme de cleaning**. |
-| **Berger** | Responsable pastoral de proximité. Les bergers ont leur propre réunion après les écoles du dimanche. **[À CONFIRMER] : quel est le périmètre d'un berger (une zone ? plusieurs tribus ?)** |
+| **Tribu** | Groupe de membres conduit par un **patriarche** (qui est un berger, voir ci-dessous). Il se réunit 10 minutes chaque dimanche après le culte. Les tribus portent aussi le **programme de cleaning**. |
+| **Berger** | Titre commun à **tous les responsables de premier niveau** : responsable de commission, responsable de zone, patriarche (responsable de tribu), assistant du pasteur. Le périmètre d'un berger est **l'unité qu'il dirige** (sa commission, sa zone, sa tribu…). Une même personne peut diriger plusieurs unités : son périmètre est alors l'union de ces unités. Les bergers ont leur propre réunion après les écoles du dimanche. |
 | **Commission** | Groupe de service : louange, art & chorégraphie, gestion des cultes, protocole, etc. Elle organise des répétitions, des prières et d'autres activités en semaine. |
-| **Gestion des cultes** | Commission qui prépare et diffuse le programme du dimanche, conduit le culte et en fait le bilan. |
+| **Gestion des cultes** | Commission chargée de la **gestion du culte dans tous les sens du terme** : organisation, programme et déroulé, timing, coordination des intervenants et des commissions de service (louange, protocole, technique…), logistique, conduite du culte en direct, diffusion du programme et bilan. |
 | **Protocole / Assistante du pasteur** | Gère les réceptions pastorales du dimanche (statistiques uniquement). |
 | **École** | Formation en présentiel le dimanche après-midi (école de disciples, de baptême, de leadership…). Elle fonctionne par année académique. |
 | **PDA** | Plan d'action : action avec un porteur, une échéance et un statut, suivie **jusqu'à sa clôture**. |
@@ -38,17 +38,57 @@ Le contrôle d'accès combine **rôle × périmètre** (RBAC + ABAC) :
 | Rôle | Périmètre de données par défaut |
 |---|---|
 | Pasteur principal / administrateur | Toute l'église |
-| Pasteurs, assistants | Toute l'église, ou les zones assignées |
-| Berger | Ses zones et tribus rattachées **[À CONFIRMER]** |
-| Patriarche | Sa tribu |
-| Responsable de commission | Sa commission |
+| Pasteurs | Toute l'église, ou les zones assignées |
+| **Berger** (titre commun des responsables de premier niveau) | **L'unité qu'il dirige**, ou l'union de ses unités s'il en dirige plusieurs : |
+| ↳ Responsable de zone | Sa zone : toutes les tribus et tous les membres de la zone |
+| ↳ Patriarche | Sa tribu |
+| ↳ Responsable de commission | Sa commission |
+| ↳ Assistant du pasteur | Le périmètre délégué par le pasteur (paramétrable) |
 | Directeur d'école / enseignant | Son école / ses classes |
 | Gestion des cultes | Cultes, programmes, bilans de culte |
 | Protocole / assistante pasteur | Réceptions pastorales (statistiques), réunions qu'elle organise |
 | Membre | Ses propres données, son parcours, ses inscriptions |
 
 - Les rôles et les droits (lecture / création / modification / validation / export) sont paramétrables par module.
+- Le rôle « berger » n'est pas un rôle isolé : c'est un **titre** porté par toute personne qui est responsable d'une unité (`org_unit.responsable_id`). Son périmètre se **déduit automatiquement** des unités qu'il dirige. Ainsi, nommer un nouveau responsable de tribu lui donne immédiatement les bons accès, sans configuration manuelle.
 - Le **périmètre est appliqué côté serveur** sur TOUTES les requêtes : API, exports, carte, tableau de bord **et assistant IA**. Utiliser la Row Level Security si la base le permet.
+
+### 1.3 Fiche membre et carte de membre (ID CARD)
+
+**Fiche membre** : identité, photo, date de naissance, sexe, situation familiale, profession, contacts, adresse (commune / quartier), date d'arrivée, date de conversion et de baptême, tribu, zone, commission(s), fonctions, écoles suivies, parcours de croissance, historique des présences.
+
+**Bouton « Générer la carte de membre »** sur la fiche → carte d'identité du membre, au format carte bancaire (CR80 : 85,6 × 54 mm), recto verso.
+
+- **Recto** :
+  - logo et nom de l'église, aux couleurs de la charte,
+  - **photo** du membre,
+  - nom, prénom,
+  - **numéro de membre** unique (matricule, ex. `SARO-2026-00123`),
+  - tribu, zone,
+  - fonction ou titre (berger, serviteur de la commission X, membre…),
+  - **QR code**.
+- **Verso** :
+  - profession, âge (ou date de naissance, au choix),
+  - **ancienneté** (« Membre depuis 2019 · 7 ans »), date de baptême,
+  - commission(s), écoles validées,
+  - contact d'urgence (nom + téléphone),
+  - date d'émission et date de validité,
+  - signature du pasteur (image), mention « Cette carte reste la propriété de l'église ».
+
+**Fonctionnement**
+- **Modèle de carte paramétrable** : choix des champs affichés au recto et au verso, couleurs, logo, durée de validité. Un administrateur peut créer plusieurs modèles (membre, serviteur, berger, visiteur).
+- **QR code sécurisé** : il contient un jeton signé, pas les données personnelles en clair. Une fois scanné dans l'application, il sert à :
+  - **vérifier** la carte (valide, expirée ou révoquée, avec photo pour contrôle visuel),
+  - **pointer la présence** au culte, en tribu ou en école en un geste (check-in).
+- **Sorties** :
+  - PDF imprimable à l'unité,
+  - **impression en lot** (planche A4 de 8 ou 10 cartes, par exemple pour toute une tribu),
+  - **carte numérique** dans l'application du membre (consultable hors ligne).
+- **Cycle de vie** : émission, renouvellement à l'expiration, **révocation** (perte, départ), réédition avec un nouveau QR code. Historique des cartes émises.
+- **Contrôles** :
+  - génération impossible sans photo ni champs obligatoires (liste des champs manquants affichée),
+  - recadrage automatique de la photo.
+- **Confidentialité** : les données sensibles (adresse, téléphone personnel) ne sont jamais imprimées par défaut.
 
 ---
 
@@ -101,7 +141,9 @@ Le contrôle d'accès combine **rôle × périmètre** (RBAC + ABAC) :
 ## 3. Programme d'activités et alertes
 
 ### 3.1 Modèle
-- **Programme** : annuel, trimestriel ou mensuel, par site ou par commission. Il contient des **activités**.
+- **Programme** : annuel, trimestriel ou mensuel. Il est rattaché à **n'importe quelle unité de l'organisation** : église, commission, tribu, zone, école… (via `org_unit`). Il contient des **activités**.
+  - Les programmes des unités se **consolident** dans le programme de l'église : le pasteur voit tout, chaque berger voit et gère le programme de son unité.
+  - Le responsable de l'unité est propriétaire de son programme. Les activités d'une unité peuvent être soumises à validation de l'échelon supérieur (paramétrable).
 - **Activité** :
   - type (paramétrable), titre, description,
   - date et heure de début et de fin, récurrence (RRULE),
@@ -390,7 +432,7 @@ Indicateurs reconnus du pilotage d'église en croissance. Chacun est affiché av
 - **Synthèse IA de la semaine**, en 5 points, en haut du tableau de bord.
 
 ### 9.3 Tableaux de bord par rôle
-Pasteur (global), gestion des cultes, berger, patriarche, responsable de commission, directeur d'école.
+Pasteur (global), gestion des cultes, bergers (responsable de zone, patriarche, responsable de commission, assistant du pasteur), directeur d'école.
 
 Chaque tableau de bord est limité au **périmètre** du rôle et ses widgets sont paramétrables (affichage, ordre).
 
@@ -401,7 +443,7 @@ Chaque tableau de bord est limité au **périmètre** du rôle et ses widgets so
 ### 10.1 Objectif
 Une intelligence interne capable de produire des **synthèses et analyses percutantes** sur l'ensemble de l'application, **strictement limitées au périmètre** de l'utilisateur :
 - le pasteur → toute l'église,
-- un berger → ses zones et tribus,
+- un berger → l'unité qu'il dirige : un responsable de zone voit sa zone, un responsable de commission sa commission,
 - un patriarche → sa tribu,
 - un responsable de commission → sa commission,
 - un directeur d'école → son école.
@@ -416,7 +458,8 @@ Une intelligence interne capable de produire des **synthèses et analyses percut
 ### 10.3 Fonctions
 - **Chat IA** : questions libres, avec des questions suggérées selon le rôle. Exemples :
   - Patriarche : « Qui sont les membres de ma tribu absents depuis 3 semaines ? »
-  - Berger : « Compare la présence en tribu de mes zones ce trimestre. »
+  - Responsable de zone : « Compare la présence des tribus de ma zone ce trimestre. »
+  - Responsable de commission : « Quels serviteurs de ma commission ont manqué plus de 2 répétitions ce mois-ci ? »
   - Pasteur : « Quelles zones ont la plus forte croissance et pourquoi ? »
   - Pasteur : « Résume les décisions des 3 dernières réunions des bergers et les PDA en retard. »
 - **Synthèses automatiques** :
@@ -476,7 +519,7 @@ Principes :
 ---
 
 ## 13. Questions ouvertes [À CONFIRMER]
-1. Relation **berger ↔ tribu ↔ zone** : un berger supervise-t-il plusieurs tribus ? Une tribu appartient-elle à une seule zone ?
+1. ~~Périmètre d'un berger~~ → **tranché** : un berger est tout responsable de premier niveau, son périmètre est l'unité qu'il dirige (§0, §1.2). Reste à confirmer : une tribu appartient-elle toujours à une seule zone ?
 2. Nombre approximatif de membres, de tribus, de commissions et d'écoles (pour dimensionner l'application).
 3. Un ou plusieurs cultes le dimanche ? Un ou plusieurs sites ?
 4. Définition d'« enfant » (âge limite) et besoin de distinguer les adolescents ?

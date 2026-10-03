@@ -59,6 +59,9 @@ Elle couvre :
 - Bilans : moteur de templates versionnés. Réponses en JSON + **indicateurs clés en colonnes typées / table de faits** pour l'analyse.
 - Zones : composition en communes **historisée** (`valid_from` / `valid_to`) ; la géométrie est calculée par union.
 - Réceptions pastorales : **statistiques uniquement**, aucun nom ni contenu.
+- **Berger** = titre commun de tous les responsables de premier niveau (responsable de zone, patriarche de tribu, responsable de commission, assistant du pasteur). Son périmètre se déduit automatiquement des unités qu'il dirige (`org_unit.responsable_id`).
+- Programmes d'activités rattachables à toute unité (église, zone, tribu, commission, école), consolidés au niveau de l'église.
+- Fiche membre : bouton « Générer la carte de membre » (format CR80 recto verso, modèle paramétrable, QR code signé pour vérification et check-in, impression en lot, carte numérique). SPEC §1.3.
 - Le dimanche fonctionne **hors ligne d'abord** (présences, bilans, notes de réunion).
 
 ## 5. Performance (Lighthouse)
